@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Build a Working Web Scraper (Step by Step, No Cloud)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#faf9f5;          /* page background */
+      --ink:#141413;         /* primary text */
+      --muted:#4b5563;       /* secondary text */
+      --code-bg:#f6f8fa;     /* light code block */
+      --code-border:#e5e7eb; /* light borders */
+      --text-column-max-width: 640px; /* reading column */
+    }
+    *{ box-sizing:border-box }
+    body{
+      margin:0;
+      font-family:"Source Serif 4", serif;
+      font-feature-settings:"pnum" on, "lnum" on, "ss01" on, "case" on;
+      background:var(--bg);
+      color:var(--ink);
+      font-size:16px; /* Anthropic body base */
+      line-height:1.25; /* Anthropic body base */
+      letter-spacing:-.01em;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+    .wrap{ max-width:var(--text-column-max-width, 640px); margin:0 auto; padding:42px 20px 72px }
+    header{ border-bottom:0; background:transparent }
+    header .wrap{ padding-bottom:18px; max-width:800px; text-align:center }
+    h1{ margin:0 0 10px; font-size:2.25rem; letter-spacing:-.015em; line-height:1.2; font-weight:600 }
+    .subtitle{ color:var(--muted) }
+    main{ background:transparent; border:0; border-radius:0; padding:0 }
+    h2{ font-size:1.75rem; margin:28px 0 12px; letter-spacing:-.005em; font-weight:600 }
+    p{ color:var(--ink); font-size:20px; line-height:1.55; letter-spacing:-.1px; margin:0 0 1rem }
+    p + p{ margin-top:1rem }
+    ul{ margin:0 0 16px 1.2rem; color:var(--ink) }
+    li{ margin:6px 0 }
+    a{ color:var(--ink); text-decoration:underline; text-underline-offset:2px }
+    a:hover{ text-decoration-thickness:2px }
+    ::selection{ background:rgba(204,120,92,.5) }
+    pre{ background:var(--code-bg); color:#0f172a; border:1px solid var(--code-border); border-radius:8px; padding:14px; overflow:auto; line-height:1.6 }
+    pre code{ display:block; background:transparent; padding:0; font-family:"Fira Code", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size:.95rem }
+    code{ font-family:"Fira Code", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size:.95rem; background:#f3f4f6; color:#111827; padding:.08em .35em; border-radius:6px }
+    .callout{ background:transparent; border:1px solid var(--code-border); border-radius:8px; padding:12px 14px; color:var(--ink); margin:14px 0 }
+    footer{ color:var(--muted); font-size:.95rem; margin-top:28px }
+    .step{ border-left:0; padding:0; margin:32px 0; background:transparent }
+    .step h2{ margin-top:0; font-weight:600 }
+    .meta{ display:flex; align-items:baseline; justify-content:center; gap:6px; color:var(--muted); font-size:.95rem; margin-top:6px }
+    .meta .meta-date{ color:var(--ink); font-weight:500 }
+    .meta .meta-sep{ color:var(--muted) }
+    .meta .meta-read{ color:var(--muted) }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>Build a Simple Python Web Scraper Step by Step</h1>
+      <div class="meta">
+        <span class="meta-date"><time datetime="2025-09-23">Sep 23, 2025</time></span>
+        <span class="meta-sep">·</span>
+        <span class="meta-read">8 min read</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <main>
+      <section class="step">
+        <h2>What we're building</h2>
+        <p>
+          The goal here is to make a user-friendly web scraper to start understanding the concept behind making one. We'll be writing a few functions to fetch a page, parse it, and save the results to a JSON file.
+          JSON files are a simple way to store data in a human-readable format. They are the standard format for most projects concerning any sort of web development.
+          This will not be a production-ready scraper, but it will be a good starting point for learning how to build one.
+        </p>
+        <div class="callout">At the end, there will be recommendations on the next steps to take to grow the project into something more impressive.</div>
+      </section>
+
+      <section class="step">
+        <h2>What is a Web Scraper?</h2>
+        <p>
+          A web scraper is a program that automatically navigates the World Wide Web to collect information about web pages.
+          It follows links from page to page, often starting from a seed URL or a list of seed URLs, and extracts data from the pages it visits.
+          It is used in machine learning and other forms of data analysis.
+          Once you understand how it works, it can grow to be a very strong and customizable tool for any data collection related task.
+          Let's begin! 
+        </p>
+      </section>
+
+
+      <section class="step">
+        <h2>Step 1 — Fetch a page</h2>
+        <p>Open up your favorite IDE to code, Visual Studio Code is a good option and is fairly popular if you don't have one to start.</p>
+        <p>Create a file called <code>scraper_local.py</code> and paste this in:</p>
+<pre><code class="language-python"># scraper_local.py
+    import urllib.request
+
+    def fetch_html(url: str, timeout: float = 30.0) -> str:
+        # 1) Build a Request object that “packages” the URL + headers we want to send
+        req = urllib.request.Request(
+            url,
+            headers={
+                # 2) Identify ourselves with a realistic User-Agent string
+                #    (This does NOT make Python a browser; it’s just an identifier)
+                "User-Agent": (
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36"
+                )
+            },
+        )
+    
+        # 3) Open a network connection to the URL using our Request
+        #    The timeout is a socket timeout (connect + read), not a retry policy
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            # 4) Decode the raw bytes to text. UTF-8 is a common default; production
+            #    code would detect charset from resp.headers when available.
+            html = resp.read().decode("utf-8", errors="ignore")
+    
+        # 5) Return the HTML text
+        return html
+</code></pre>
+<div class="callout">What are we looking at here?</div>
+<p>
+    This is simpler than it looks, let's break it down.
+</p>
+
+<p>
+    we're using the Python standard library module <code>urllib</code> to fetch a page  at a given <code>url</code>. 
+    <code>urllib</code> lets you make HTTP requests. (i.e., ask a website for its content).
+</p>
+<p>
+    We have two parameters in <code>fetch_html</code>, the <code>url</code> and the <code>timeout</code>.
+    The <code>url</code> is the url we want to fetch, and the <code>timeout</code> is an optional parameter that allows us to specify how long to wait 
+    for a response before giving up (so we don't get stuck waiting for a response forever). You can find this in the docs <a href="https://docs.python.org/3/library/urllib.request.html">here</a>.
+</p>
+
+<p>
+    req is a <a href="https://docs.python.org/3/library/urllib.request.html#urllib.request.Request">Request</a> object, 
+    a small container holding al the information python needs to ask a website for its content. 
+    It stores the URL we want to visit, along with any extra details we want to send called HTTP <em>headers</em>. 
+</p>
+
+<p>
+    A User-Agent is simply a software acting on web content making requests, in this case,
+    we're acting on behalf of a browser requesting a page.
+    The User-Agent <strong>header</strong> is a text string sent along with the request that identifies this software to the website. 
+    Many websites check this value to decide whether to allow or block the request. 
+    The string “Mozilla/5.0 … Chrome/120 … Safari/537.36.” is a conventional token commonly used by Chrome-like browsers to identify themselves.
+</p>
+
+<p>
+    <code>urlopen(...)</code> opens a network connection and sends your request to the internet, then brings back a
+    <em>response</em>. We store that response in a variable called <code>resp</code>.
+    Inside <code>resp</code>, we have:
+</p>
+<ul>
+    <li><strong>Status code</strong> — tells you if the request worked (e.g., <code>200</code> means OK).</li>
+    <li><strong>Headers</strong> — extra info like <code>Content-Type</code> that describes the response.</li>
+    <li><strong>Body</strong> — the actual page content, but as <em>raw bytes</em> (not human‑readable text yet).</li>
+</ul>
+
+<p>
+    We call <code>resp.read()</code> to get those raw bytes, then convert them into normal text with
+    <code>.decode("utf-8", errors="ignore")</code>. “UTF‑8” is a very common way to represent text. 
+    But a more robust approach is to ask the server which one it used via
+    <code>resp.headers.get_content_charset()</code> and decode with that instead. 
+    However, we are keeping it simple for demonstration purposes.
+</p>
+
+<p>
+    Finally, we return the HTML string so other parts of the program (parsers) can use it.
+</p>
+
+<p>
+    Phew, we're past the most complicated part. Now we can move on to parsing the HTML.
+</p>
+      </section>
+
+      <section class="step">
+        <h2>Step 2 — Parse useful bits (regex)</h2>
+        <p>
+            We're going to write a simple parser that extracts a title, headings (H1–H3),
+            the first 5 paragraphs, and up to 10 links.
+            For a production-grade scraper, you should use BeautifulSoup, which is a much
+            better option for parsing HTML. But, for the sake of this exercise, we're going
+            to use regex.
+            The code in Step 1 will still work if you do wish to use BeautifulSoup.
+        </p>
+<pre><code class="language-python">import re
+from urllib.parse import urljoin
+
+def parse_html(html: str, base_url: str) -&gt; dict:
+    data = {}
+    # Title
+    m = re.search(r"&lt;title[^&gt;]*&gt;([^&lt;]+)&lt;/title&gt;", html, re.IGNORECASE)
+    data["title"] = [m.group(1).strip()] if m else ["No title found"]
+
+    # Headings (H1..H3)
+    headings = re.findall(r"&lt;h[1-3][^&gt;]*&gt;([^&lt;]+)&lt;/h[1-3]&gt;", html, re.IGNORECASE)
+    data["headings"] = [h.strip() for h in headings if h.strip()]
+
+    # Paragraphs (limit 5)
+    paragraphs = re.findall(r"&lt;p[^&gt;]*&gt;([^&lt;]+)&lt;/p&gt;", html, re.IGNORECASE)
+    data["paragraphs"] = [p.strip() for p in paragraphs if p.strip()][:5]
+
+    # Links (limit 10)
+    links = re.findall(r"&lt;a[^&gt;]*href=[\"\']([^\"\'&gt;]+)[\"\'][^&gt;]*&gt;([^&lt;]+)&lt;/a&gt;", html, re.IGNORECASE)
+    data["links"] = [
+        {"text": text.strip(), "href": urljoin(base_url, href)}
+        for href, text in links if text.strip()
+    ][:10]
+    return data
+</code></pre>
+          <p>Regex keeps this tiny with zero dependencies.</p>
+      </section>
+
+      <section class="step">
+        <h2>Step 3 — Glue it together</h2>
+        <p>Combine our fetcher (step 1) + and parser (step 2) into a single function you can call from <code>__main__</code>.</p>
+<pre><code class="language-python">def scrape_website_simple(url: str) -> dict:
+    html = fetch_html(url)
+    data = parse_html(html, base_url=url)
+    print(
+        f"Extracted: {len(data['headings'])} headings, "
+        f"{len(data['paragraphs'])} paragraphs, {len(data['links'])} links"
+    )
+    return data
+</code></pre>
+      </section>
+
+      <section class="step">
+        <h2>Step 4 — Save results (JSON)</h2>
+        <p>JSON is a simple way to save data, other options include CSV, XML, and YAML. It's up to the needs of your project.</p>
+<pre><code class="language-python">import json, os
+
+def save_json(data: dict, filename: str = "scraped_result.json") -> str:
+    with open(filename, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+    print(f"Saved results to {os.path.abspath(filename)}")
+    return filename
+</code></pre>
+      </section>
+
+      <section class="step">
+        <h2>Step 5 — Run it!</h2>
+        <p>Add a <code>__main__</code> so you can run it from the terminal. this is common practice.</p>
+<pre><code class="language-python">if __name__ == "__main__":
+    url = "https://example.com"  # change this to any page you want
+    result = scrape_website_simple(url)
+
+    # Show a small preview in the console
+    print("\nPreview:")
+    print("Title:", result.get("title")[:1])
+    print("First headings:", result.get("headings", [])[:3])
+    print("First paragraph:", result.get("paragraphs", [])[:1])
+    print("First links:", result.get("links", [])[:2])
+
+    # Save everything to JSON
+    save_json(result, "scraped_example.json")
+</code></pre>
+
+<section class="step">
+    <p>In case you'd like, this is the full code for <code>scraper_local.py</code></p>
+<pre><code class="language-python"># scraper_local.py
+import urllib.request
+import re
+from urllib.parse import urljoin
+import json, os
+
+
+def fetch_html(url: str, timeout: float = 30.0) -> str:
+req = urllib.request.Request(
+    url,
+    headers={
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36"
+        )
+    },
+)
+with urllib.request.urlopen(req, timeout=timeout) as resp:
+    html = resp.read().decode("utf-8", errors="ignore")
+return html
+
+
+def parse_html(html: str, base_url: str) -> dict:
+data = {}
+# Title
+m = re.search(r"&lt;title[^&gt;]*&gt;([^&lt;]+)&lt;/title&gt;", html, re.IGNORECASE)
+data["title"] = [m.group(1).strip()] if m else ["No title found"]
+
+# Headings (H1..H3)
+headings = re.findall(r"&lt;h[1-3][^&gt;]*&gt;([^&lt;]+)&lt;/h[1-3]&gt;", html, re.IGNORECASE)
+data["headings"] = [h.strip() for h in headings if h.strip()]
+
+# Paragraphs (limit 5)
+paragraphs = re.findall(r"&lt;p[^&gt;]*&gt;([^&lt;]+)&lt;/p&gt;", html, re.IGNORECASE)
+data["paragraphs"] = [p.strip() for p in paragraphs if p.strip()][:5]
+
+# Links (limit 10)
+links = re.findall(r"&lt;a[^&gt;]*href=[\"\']([^\"\'&gt;]+)[\"\'][^&gt;]*&gt;([^&lt;]+)&lt;/a&gt;", html, re.IGNORECASE)
+data["links"] = [
+    {"text": text.strip(), "href": urljoin(base_url, href)}
+    for href, text in links if text.strip()
+][:10]
+return data
+
+
+def scrape_website_simple(url: str) -> dict:
+html = fetch_html(url)
+data = parse_html(html, base_url=url)
+print(
+    f"Extracted: {len(data['headings'])} headings, "
+    f"{len(data['paragraphs'])} paragraphs, {len(data['links'])} links"
+)
+return data
+
+
+def save_json(data: dict, filename: str = "scraped_result.json") -> str:
+with open(filename, "w", encoding="utf-8") as f:
+    json.dump(data, f, ensure_ascii=False, indent=2)
+print(f"Saved results to {os.path.abspath(filename)}")
+return filename
+
+
+if __name__ == "__main__":
+url = "https://example.com"  # change this to any page you want
+result = scrape_website_simple(url)
+
+# Show a small preview in the console
+print("\nPreview:")
+print("Title:", result.get("title")[:1])
+print("First headings:", result.get("headings", [])[:3])
+print("First paragraph:", result.get("paragraphs", [])[:1])
+print("First links:", result.get("links", [])[:2])
+
+# Save everything to JSON
+save_json(result, "scraped_example.json")
+</code></pre>
+  </section>
+
+  <section class="step">
+    <p>Moment of truth, run it by typing in the command line:</p>
+<pre><code class="language-bash">python scraper_local.py
+</code></pre>
+    <p>And we're done! You should see something like this:</p>
+<pre><code class="language-text">Fetched 12543 characters from https://example.com
+Extracted: 1 headings, 1 paragraphs, 2 links
+
+Preview:
+Title: ['Example Domain']
+First headings: ['Example Domain']
+First paragraph: ['This domain is for use in illustrative examples in documents.']
+First links: [{'text': 'More information...', 'href': 'https://www.iana.org/domains/example'}]
+Saved results to C:\\path\\to\\scraped_example.json
+</code></pre>
+  </section>
+
+      <section class="step">
+        <h2>Where to go next</h2>
+
+        <p>
+            There's definitely a lot more to learn, there are protocols to respect, 
+            rate limits to implement, and more. But you have a working scraper now!
+        </p>
+        
+        <p>
+            A scraper is a tool, and you can use it to build all sorts of things. 
+            You can use it to build a website, an app, a bot, a service.
+            You can look into AWS CDK and build on top of this scraper with a 
+            serverless function, you can store the results in a database, or 
+            send them to an API.
+        </p>
+        
+        <p>
+            Looking into robots.txt and rate limiting is a good next step. 
+            There are also other tools you can use to scrape websites, such as 
+            BeautifulSoup, Scrapy, and more.
+            And there are other approaches to scraping websites, such as Playwright, 
+            which is a great tool for scraping websites that use JavaScript.
+        </p>
+        
+        <p>
+            Now that you understand the basic idea behind one, explore what's out there and build something cool!
+        </p>
+      </section>
+
+      <footer>
+        <p>Author: Samer Bishara • <a href="mailto:samer.bishara7@gmail.com">samer.bishara7@gmail.com</a></p>
+        <p>Everything above runs locally. No dependencies beyond Python stdlib.</p>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>

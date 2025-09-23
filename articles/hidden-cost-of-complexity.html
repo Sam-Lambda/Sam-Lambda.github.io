@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>The Hidden Cost of Complexity in Side Projects</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#faf9f5;
+      --ink:#141413;
+      --muted:#4b5563;
+      --code-bg:#f6f8fa;
+      --code-border:#e5e7eb;
+      --text-column-max-width: 640px;
+    }
+    *{ box-sizing:border-box }
+    body{
+      margin:0;
+      font-family:"Source Serif 4", serif;
+      font-feature-settings:"pnum" on, "lnum" on, "ss01" on, "case" on;
+      background:var(--bg);
+      color:var(--ink);
+      font-size:16px;
+      line-height:1.25;
+      letter-spacing:-.01em;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+    .wrap{ max-width:var(--text-column-max-width, 640px); margin:0 auto; padding:42px 20px 72px }
+    header{ border-bottom:0; background:transparent }
+    header .wrap{ padding-bottom:18px; max-width:800px; text-align:center }
+    h1{ margin:0 0 10px; font-size:2.25rem; letter-spacing:-.015em; line-height:1.2; font-weight:600 }
+    main{ background:transparent; border:0; border-radius:0; padding:0 }
+    h2{ font-size:1.75rem; margin:28px 0 12px; letter-spacing:-.005em; font-weight:600 }
+    p{ color:var(--ink); font-size:20px; line-height:1.55; letter-spacing:-.1px; margin:0 0 1rem }
+    p + p{ margin-top:1rem }
+    ul{ margin:0 0 16px 1.2rem; color:var(--ink) }
+    li{ margin:6px 0 }
+    a{ color:var(--ink); text-decoration:underline; text-underline-offset:2px }
+    a:hover{ text-decoration-thickness:2px }
+    ::selection{ background:rgba(204,120,92,.5) }
+    .callout{ background:transparent; border:1px solid var(--code-border); border-radius:8px; padding:12px 14px; color:var(--ink); margin:14px 0 }
+    footer{ color:var(--muted); font-size:.95rem; margin-top:28px }
+    /* Added for readability */
+    nav.toc{ border:1px solid var(--code-border); border-radius:12px; padding:12px 16px; margin:12px 0 24px; background:transparent }
+    nav.toc .toc-title{ margin:0; font-size:1.1rem; color:var(--ink); letter-spacing:-.01em }
+    nav.toc ul{ list-style:none; padding:0; margin:8px 0 0 }
+    nav.toc li{ margin:6px 0 }
+    nav.toc a{ color:var(--muted); text-decoration:none }
+    nav.toc a:hover{ text-decoration:underline }
+    hr{ border:0; border-top:1px solid var(--code-border); margin:28px 0 }
+    .back-top{ text-align:right; font-size:.95rem; margin-top:8px }
+    .back-top a{ color:var(--muted); text-decoration:none }
+    .back-top a:hover{ text-decoration:underline }
+  </style>
+</head>
+<body id="top">
+  <header>
+    <div class="wrap">
+      <h1>The Hidden Cost of Complexity in Side Projects</h1>
+      <div class="meta" style="display:flex;justify-content:center;gap:6px;color:var(--muted);font-size:.95rem;margin-top:6px">
+        <!-- 
+        <span class="meta-date" style="color:var(--ink);font-weight:500"><time datetime="2025-09-23">Sep 23, 2025</time></span>
+        -->
+        <span class="meta-sep">·</span>
+        <span class="meta-read">6 min read</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <nav class="toc" aria-label="Table of contents">
+      <h3 class="toc-title">Contents</h3>
+      <ul>
+        <li><a href="#intro">Introduction</a></li>
+        <li><a href="#complexity-looks-like">What complexity looks like</a></li>
+        <li><a href="#costs">The costs you actually pay</a></li>
+        <li><a href="#why-simplicity-ships">Why simplicity ships</a></li>
+        <li><a href="#when-complexity-right">When complexity is the right call</a></li>
+        <li><a href="#checklist">A quick checklist you can use today</a></li>
+        <li><a href="#short-answer">So the short answer?</a></li>
+      </ul>
+    </nav>
+    <main>
+      <section>
+        <h2 id="intro">Introduction</h2>
+        <p>
+          Side projects usually start with energy and optimism, and then stall out 
+          when complexity creeps in.
+          We think we have to use the latest and greatest tools
+          as though that makes the project better.
+          Often, we’re just making it slower to ship.
+        </p>
+        <p>
+          This article is a field guide to recognizing unnecessary complexity early, understanding
+          the hidden costs it imposes, and using a few simple practices to keep momentum and ship value.
+        </p>
+      </section>
+
+      <hr />
+
+      <section>
+        <h2 id="complexity-looks-like">What “complexity” really looks like in side projects</h2>
+        <p>
+          Complexity rarely arrives as a single big decision. It seeps in through small choices that feel reasonable in the moment.
+        </p>
+        <p>
+        You might have found a package that seems really powerful, has a lot of tools.
+        But you have to check yourself and ask, what do I really need here? 
+        Is this more complicated than I need it to be?
+        In my case, I wanted to write up a scraper that I could host on AWS and not worry about 
+        the infrastructure.
+        I had just finished learning about PlayWright for testing, but realized it 
+        can also be used for web scraping. I got excited, I thought 
+        it would be perfect.
+        </p>
+        <p>
+        I was naive. it turned out to be a bad choice for my MVP. 
+        Playwright created a lot of friction on my Windows machine and inside Lambda packaging.
+        The goal at that stage was to prove the pipeline end-to-end, not to render complex JavaScript.
+        Which is why Playwright was not the right choice for my MVP.
+        </p>
+        <p>
+          Sometimes you also think to yourself, the more tools you're using in your project, the more professional it seems.
+          the idea is you're being comprehensive, but it's not always the right choice.
+          I had also gotten Docker involved, and that came with its own set of issues.
+          Headless Chrome/Playwright ships large browser binaries (hundreds of MB). 
+          On Lambda, that usually forces you to use a custom Lambda layer or a container
+           image to bring those binaries along, which increases build size and slows 
+           iteration.
+        </p>
+        
+        <p>
+            Unclear success criteria is dangerous. If you don't know what you're building towards,
+            you cannot correctly filter out what you need and don't need, and will 
+            end up getting confused by the noise.
+        </p>
+
+        <section>
+            <h2 id="what-to-do">What to do?</h2>
+        <p>
+            I had to ask myself okay, what do I want this project to even produce?
+            Once I realized all I wanted was to get some experience with AWS 
+            and get a scraper up and running, I could strip down the stack to the essentials.
+        </p>
+        <p>
+            The Playwright route required <code>pip install playwright</code> then
+            <code>playwright install</code> to download a full browser. Bundling that into a Lambda-compatible artifact from Windows
+            meant crossing OS boundaries (Windows → Amazon Linux) and dealing with Chromium’s native dependencies
+            brought a lot of errors.
+        </p>
+        <p>
+            The loop became: build image → push/deploy → invoke → sift through logs.
+        </p>
+        <p>
+          Browser‑level errors don’t always surface clearly in CloudWatch, so each iteration took longer than it should for an MVP.
+        </p>
+        <p>
+          But when I stripped things down, I got immediate end‑to‑end success: 200 responses from targets, JSON written to S3, job status tracked in
+          DynamoDB, and clear CloudWatch logs for every run.
+        </p>
+        <p>
+          The architecture was solid. CDK + Lambda + S3 + DynamoDB worked perfectly.
+        </p>
+        <p>
+          Lower ops overhead and faster iteration: No Docker image, no custom Lambda layer, no Amazon Linux library
+          scavenger hunt, and no Windows permission traps. Small, quick deployments kept momentum high.
+        </p>
+        <p>
+          I realized my problem is that I was stubborn on using PlayWright and Docker. I didn't need them for my purposes.
+          The moment I stripped the stack down to the essentials, the pipeline clicked.
+        </p>
+      </section>
+
+      <section>
+        <h2 id="costs">The costs you actually pay</h2>
+        <p>
+          Complexity isn’t just about lines of code. It taxes your time, attention, and confidence in ways that are easy to underestimate.
+          Before you notice you'll have sunk hours into  version pinning, and environment fixes.
+        </p>
+          <p>
+            That stack you're looking at is powerful—but it also adds large binaries, special OS requirements, and build steps.
+            And really think about what you're adding here, 
+            Every extra layer becomes another thing to patch, update, and re-learn after a break.
+            Is that something you want to be a part of your maintenance procedure?
+            To add a new tool is to keep up to date with it and understand its Role 
+            in the project. If you don't want to be busy doing that, find a simpler route.
+            You can always add it later, and this will save you time and effort.
+            More moving parts are not always better.
+            </p>
+        <div class="callout">If the core of your idea is still undone, every extra layer is a bet against momentum.</div>
+      </section>
+
+      <section>
+        <h2 id="simplicity-ships">Simplicity ships</h2>
+        <p>
+          Shipping a small, working slice creates real feedback. It also protects your time.
+          You can test the idea with real inputs and users sooner. Fewer layers mean fewer places for things to go wrong.
+        </p>
+      </section>
+
+      <section>
+        <h2 id="when-complexity-right">When complexity is the right call</h2>
+        <ul>
+          <li><strong>You have a complete MVP </strong> Make sure you have a working foundation. Then add as you please.</li>
+          <li><strong>Requirements demand it.</strong> For example, you must render JavaScript, use a private network, or meet strict compliance.</li>
+          <li><strong>Cost or scale pressure.</strong> Only after you’ve proven value and need durability, you can expand.</li>
+          <li><strong>Team context.</strong> The team is in need of a standardized runtime or reproducible images.</li>
+        </ul>
+        <p>
+          Even then, introduce complexity deliberately: behind a stable interface, with clear rollback, and with
+          a “remove it if it hurts delivery” mindset.
+        </p>
+      </section>
+
+      <section>
+        <h2 id="checklist">A quick checklist you can use today</h2>
+        <ul>
+          <li><strong>Default to the simplest thing that works.</strong> Use built-ins and a single file if possible.</li>
+          <li><strong>State the goal and a success metric.</strong> “We’ll know it works when X is true.”</li>
+          <li><strong>Time tasks.</strong> this is so important. Basic sunken cost fallacy, you will waste so much time otherwise.</li>
+          <li><strong>What will I remove if I get stuck?</strong> Make the escape hatch explicit.</li>
+          <li><strong>Iterate only after you can demo value.</strong> Add optimizations behind the same interface.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 id="short-answer">So the short answer?</h2>
+        <p>
+            complexity should earn its way in. Start simple, then add heavy tools only when the
+          core path truly demands it. 
+          Prove the pipeline first, then earn the complexity.
+            Step by step, you can build a solid foundation for your project.
+            Don't rush complexity, I promise you it will find its way 
+            to you anyway and confuse you, so enjoy the simplicity while
+            you have it.
+        </p>
+      </section>
+
+      <div class="back-top"><a href="#top">Back to top ↑</a></div>
+
+      <footer>
+        <p>Author: Samer Bishara • <a href="mailto:samer.bishara7@gmail.com">samer.bishara7@gmail.com</a></p>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>
