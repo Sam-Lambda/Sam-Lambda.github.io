@@ -43,6 +43,12 @@
     a{ color:var(--ink); text-decoration:underline; text-underline-offset:2px }
     a:hover{ text-decoration-thickness:2px }
     footer{ color:var(--muted); font-size:.95rem; margin-top:28px; text-align:center }
+    /* Content spacing: reduce top padding only for the main content wrap */
+    .wrap.content{ padding-top:16px }
+
+    /* Resume call-to-action */
+    .resume-cta{ text-align:center; margin:0 0 20px }
+    .resume-cta a{ display:inline-block; font-size:1.15rem; font-weight:600; text-decoration:none; color:var(--ink); border:1px solid var(--code-border); padding:10px 14px; border-radius:10px; background:transparent; box-shadow:0 1px 0 rgba(0,0,0,.04) }
   </style>
 </head>
 <body>
@@ -55,11 +61,11 @@
     </div>
   </header>
 
-  <div class="wrap">
+  <div class="wrap content">
     <main>
-      <p style="text-align:center;margin:0 0 16px">
+      <div class="resume-cta">
         <a href="assets/samerbisharasep2025.pdf" target="_blank" rel="noopener">Resume (PDF)</a>
-      </p>
+      </div>
       <div class="list">
         <article class="card">
           <h2><a href="articles/hidden-cost-of-complexity.html">The Hidden Cost of Complexity in Side Projects</a></h2>
